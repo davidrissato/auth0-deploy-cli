@@ -7,20 +7,7 @@ import args from './args';
 import commands from './commands';
 import log from './logger';
 
-// Load cli params
-const params = args.argv;
-
-log.debug('Starting Auth0 Deploy CLI Tool');
-
-// Set log level
-log.transports.console.level = params.level;
-if (params.debug) {
-  log.transports.console.level = 'debug';
-  // Set for auth0-source-control-ext-tools
-  process.env.AUTH0_DEBUG = 'true';
-}
-
-async function run() {
+async function run(params) {
   // Run command
   const cmd = commands[params._[0]];
 
@@ -50,9 +37,26 @@ async function run() {
   log.debug(`Finished command ${params._[0]}`);
 }
 
+function configureLog(params) {
+  // Set log level
+  log.transports.console.level = params.level;
+  if (params.debug) {
+    log.transports.console.level = 'debug';
+    // Set for auth0-source-control-ext-tools
+    process.env.AUTH0_DEBUG = 'true';
+  }
+}
+
 // Only run if from command line
 if (require.main === module) {
-  run()
+  // Load cli params
+  const params = args.argv;
+
+  configureLog(params);
+
+  log.debug('Starting Auth0 Deploy CLI Tool');
+  
+  run(params)
     .then(() => process.exit(0))
     .catch((error) => {
       if (error.type || error.stage) {
@@ -81,5 +85,6 @@ module.exports = {
   deploy: commands.import,
   dump: commands.export,
   import: commands.import,
-  export: commands.export
+  export: commands.export,
+  configureLog: configureLog
 };
